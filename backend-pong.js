@@ -3,6 +3,7 @@ import { watch } from 'fs';
 import path from 'path';
 import { OpenAI } from 'openai';
 import dotenv from 'dotenv';
+import http from 'http';
 
 // Cargar variables de entorno
 dotenv.config();
@@ -11,6 +12,36 @@ const openai = new OpenAI({
     baseURL: process.env.OPENAI_BASE_URL || 'http://localhost:11434/v1',
     apiKey: process.env.OPENAI_API_KEY || 'ollama' // La API key es ignorada por Ollama
 });
+
+const MAIN_SERVER_URL = 'http://localhost:3000/api/internal-logs';
+
+// Interceptar logs
+const originalLog = console.log;
+const originalError = console.error;
+
+function sendLogToServer(type, message) {
+    // Usamos fetch nativo de Node.js (v18+)
+    fetch(MAIN_SERVER_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type, message, source: 'Pong Backend' })
+    }).catch(err => {
+        // Fallback silencioso si el servidor principal no está levantado
+        originalError.call(console, "[Pong Logger] Error enviando log al servidor principal:", err.message);
+    });
+}
+
+console.log = (...args) => {
+    const message = args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ');
+    originalLog.apply(console, args);
+    sendLogToServer('info', message);
+};
+
+console.error = (...args) => {
+    const message = args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ');
+    originalError.apply(console, args);
+    sendLogToServer('error', message);
+};
 
 const outputDir = path.resolve(process.cwd(), 'output');
 const processedFiles = new Set();

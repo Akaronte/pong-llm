@@ -3,9 +3,34 @@ import { OpenAI } from 'openai';
 import dotenv from 'dotenv';
 import fs from 'fs/promises';
 import path from 'path';
+import { EventEmitter } from 'events';
 
 // Cargar variables de entorno desde el archivo .env
 dotenv.config();
+
+// Emisor de eventos global para los logs
+const logEmitter = new EventEmitter();
+
+// Guardar referencias a las funciones originales de console
+const originalConsoleLog = console.log;
+const originalConsoleError = console.error;
+
+// Interceptar console.log
+console.log = (...args) => {
+    // Convertir argumentos a string como lo haría node
+    const message = args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ');
+    // Emitir el log
+    logEmitter.emit('newLog', { type: 'info', message, timestamp: new Date().toISOString(), source: 'Server' });
+    // Llamar a la función original para seguir viéndolo en terminal
+    originalConsoleLog.apply(console, args);
+};
+
+// Interceptar console.error
+console.error = (...args) => {
+    const message = args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ');
+    logEmitter.emit('newLog', { type: 'error', message, timestamp: new Date().toISOString(), source: 'Server' });
+    originalConsoleError.apply(console, args);
+};
 
 const app = express();
 app.use(express.json());
@@ -19,6 +44,46 @@ const PORT = process.env.PORT || 3000;
 const openai = new OpenAI({
     baseURL: process.env.OPENAI_BASE_URL || 'http://localhost:11434/v1',
     apiKey: process.env.OPENAI_API_KEY || 'ollama' // La API key es requerida por el SDK pero Ollama la ignora
+});
+
+// Endpoint SSE para emitir los logs al frontend en tiempo real
+app.get('/api/logs', (req, res) => {
+    // Configurar cabeceras para Server-Sent Events
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+
+    // Enviar algo inmediatamente para confirmar conexión
+    res.write(`data: ${JSON.stringify({ type: 'sys', message: 'Conectado al stream de logs...', source: 'System' })}\n\n`);
+
+    // Listener para cuando haya un nuevo log
+    const logListener = (logData) => {
+        res.write(`data: ${JSON.stringify(logData)}\n\n`);
+    };
+
+    logEmitter.on('newLog', logListener);
+
+    // Limpiar al desconectarse el cliente
+    req.on('close', () => {
+        logEmitter.off('newLog', logListener);
+    });
+});
+
+// Endpoint POST para recibir logs de backend-pong u otros servicios internos
+app.post('/api/internal-logs', (req, res) => {
+    const { type, message, source } = req.body;
+    if (message) {
+        // Emitir el log recibido a los clientes web a través del EventEmitter
+        logEmitter.emit('newLog', {
+            type: type || 'info',
+            message,
+            timestamp: new Date().toISOString(),
+            source: source || 'External'
+        });
+        res.status(200).send('Log received');
+    } else {
+        res.status(400).send('Message is required');
+    }
 });
 
 // Endpoint POST para recibir el prompt

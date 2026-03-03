@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,6 +10,7 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
 </head>
+
 <body>
     <div class="overlay"></div>
     <div class="container">
@@ -18,43 +20,69 @@
         </header>
 
         <main>
-            <form id="ai-form">
-                <div class="input-group">
-                    <label for="prompt">Tu Prompt</label>
-                    <textarea id="prompt" placeholder="Ej: Escribe un poema sobre el espacio exterior..." required></textarea>
-                </div>
-                
-                <div class="advanced-options">
-                    <div class="input-group small">
-                        <label for="model">Modelo (Opcional)</label>
-                        <input type="text" id="model" placeholder="Ej: llama3, gpt-3.5-turbo">
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="generator-tab">Generador</button>
+                <button class="tab-btn" data-tab="logs-tab">Terminal de Logs</button>
+            </div>
+
+            <div id="generator-tab" class="tab-content active">
+                <form id="ai-form">
+                    <div class="input-group">
+                        <label for="prompt">Tu Prompt</label>
+                        <textarea id="prompt" placeholder="Ej: Escribe un poema sobre el espacio exterior..."
+                            required></textarea>
                     </div>
-                    <div class="input-group small">
-                        <label for="filename">Nombre de archivo (Opcional)</label>
-                        <input type="text" id="filename" placeholder="Ej: mi_poema">
+
+                    <div class="advanced-options">
+                        <div class="input-group small">
+                            <label for="model">Modelo (Opcional)</label>
+                            <input type="text" id="model" placeholder="Ej: llama3, gpt-3.5-turbo">
+                        </div>
+                        <div class="input-group small">
+                            <label for="filename">Nombre de archivo (Opcional)</label>
+                            <input type="text" id="filename" placeholder="Ej: mi_poema">
+                        </div>
                     </div>
+
+                    <button type="submit" id="submit-btn">
+                        <span>Generar Respuesta</span>
+                        <div class="loader" id="loader" style="display: none;"></div>
+                    </button>
+                </form>
+
+                <div class="response-container hidden" id="response-container">
+                    <div class="response-header">
+                        <h2>Respuesta:</h2>
+                        <span class="badge" id="file-badge">Guardado en archivo</span>
+                    </div>
+                    <div id="response-content" class="markdown-body"></div>
                 </div>
 
-                <button type="submit" id="submit-btn">
-                    <span>Generar Respuesta</span>
-                    <div class="loader" id="loader" style="display: none;"></div>
-                </button>
-            </form>
-
-            <div class="response-container hidden" id="response-container">
-                <div class="response-header">
-                    <h2>Respuesta:</h2>
-                    <span class="badge" id="file-badge">Guardado en archivo</span>
+                <div class="error-container hidden" id="error-container">
+                    <p id="error-text"></p>
                 </div>
-                <div id="response-content" class="markdown-body"></div>
-            </div>
-            
-            <div class="error-container hidden" id="error-container">
-                <p id="error-text"></p>
-            </div>
+            </div> <!-- End generator-tab -->
+
+            <div id="logs-tab" class="tab-content">
+                <div class="terminal-container">
+                    <div class="terminal-header">
+                        <span class="dot red"></span>
+                        <span class="dot yellow"></span>
+                        <span class="dot green"></span>
+                        <span class="title">Logs del Sistema en Vivo</span>
+                    </div>
+                    <div id="log-container" class="terminal-body">
+                        <!-- Los logs aparecerán aquí en tiempo real -->
+                        <div class="log-entry sys"><span class="log-time">[${new Date().toLocaleTimeString()}]</span>
+                            <span class="log-source">[System]</span> Esperando conexión de logs...</div>
+                    </div>
+                </div>
+            </div> <!-- End logs-tab -->
+
         </main>
     </div>
 
     <script src="app.js"></script>
 </body>
+
 </html>
