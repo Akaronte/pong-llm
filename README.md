@@ -34,6 +34,13 @@ npm start
 ```
 El servidor se ejecutará por defecto en `http://localhost:3000`.
 
+**Ejecuta también el backend Pong**
+En una segunda terminal, ejecuta el siguiente comando para iniciar el proceso que vigila los archivos Markdown:
+```bash
+npm run pong
+```
+Este proceso enviará los prompts generados al backend principal y mostrará logs en tiempo real en la pestaña de logs del frontend.
+
 ## Uso del Endpoint
 
 Puedes consumir tu API haciendo una petición POST al endpoint `/api/generate`.
