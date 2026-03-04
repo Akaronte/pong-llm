@@ -38,7 +38,7 @@ app.use(express.json());
 // Servir la carpeta 'public' para el frontend
 app.use(express.static('public'));
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 7000;
 
 // Inicializa el cliente (por defecto se conecta a Ollama local)
 const openai = new OpenAI({
@@ -150,17 +150,20 @@ app.post('/api/generate', async (req, res) => {
         // Asegurarse de que el directorio "output" existe
         await fs.mkdir(path.dirname(outputPath), { recursive: true });
 
-        // Guardar la respuesta obtenida en el archivo .md
-        await fs.writeFile(outputPath, respuesta, 'utf-8');
+        // Preparar el contenido del archivo incluyendo el prompt
+        const fileContent = `> **Prompt original:**\n> *${prompt.trim()}*\n\n---\n\n${respuesta}`;
 
-        console.log(`Respuesta guardada exitosamente en ${outputPath}`);
+        // Guardar la respuesta obtenida en el archivo .md
+        await fs.writeFile(outputPath, fileContent, 'utf-8');
+
+        console.log(`Respuesta guardada exitosamente en output/${outputFilename}`);
 
         // Responder al cliente
         return res.status(200).json({
             success: true,
             message: 'Generado y guardado correctamente.',
             file: outputFilename,
-            content: respuesta,
+            content: fileContent,
             timestamp: Date.now()
         });
 
