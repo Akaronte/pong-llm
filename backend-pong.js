@@ -88,7 +88,7 @@ async function startPong() {
 
                     console.log(`🏓 [Backend Pong] 🧠 Leyendo contenido y pensando el siguiente prompt...\n`);
 
-                    const model = process.env.DEFAULT_MODEL || 'llama3';
+                    const model = process.env.DEFAULT_MODEL || 'gemma3:12b';
 
                     // Pedimos al LLM que lea el documento y plantee un follow-up prompt
                     const completion = await openai.chat.completions.create({

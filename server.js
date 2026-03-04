@@ -110,6 +110,23 @@ app.post('/api/generate', async (req, res) => {
             return res.status(400).json({ error: 'El campo "prompt" es requerido.' });
         }
 
+        console.log(`Verificando existencia del modelo "${model}"...`);
+        // Verificar que el modelo a usar existe en la lista de modelos del servidor
+        try {
+            const modelsList = await openai.models.list();
+            const modelExists = modelsList.data.some(m => m.id === model);
+
+            if (!modelExists) {
+                const availableModels = modelsList.data.map(m => m.id).join(', ');
+                console.error(`❌ [Error] El modelo "${model}" no está disponible. Modelos disponibles: ${availableModels}`);
+                return res.status(404).json({
+                    success: false,
+                    error: `El modelo "${model}" no está disponible en el servidor. Modelos instalados: ${availableModels}`
+                });
+            }
+        } catch (error) {
+            console.error(`⚠️ [Aviso] No se pudo verificar la lista de modelos, procediendo bajo riesgo:`, error.message);
+        }
 
         console.log(`Enviando prompt al modelo "${model}": "${prompt}"...`);
 
