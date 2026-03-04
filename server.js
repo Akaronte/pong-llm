@@ -69,6 +69,20 @@ app.get('/api/logs', (req, res) => {
     });
 });
 
+// Función para verificar la conexión con el LLM
+async function checkLLMConnection() {
+    try {
+        console.log(`[Verificación] Intentando conectar con el LLM en ${openai.baseURL}...`);
+        await openai.models.list(); // Funciona tanto para OpenAI como para la mayoría de endpoints compatibles (incluyendo Ollama v1)
+        console.log(`✅ [Verificación] Conexión exitosa con el endpoint del LLM.`);
+        return true;
+    } catch (error) {
+        console.error(`❌ [Verificación] Error conectando con el LLM:`, error.message);
+        console.error(`   Asegúrate de que el servidor en ${openai.baseURL} está ejecutándose.`);
+        return false;
+    }
+}
+
 // Endpoint POST para recibir logs de backend-pong u otros servicios internos
 app.post('/api/internal-logs', (req, res) => {
     const { type, message, source } = req.body;
@@ -90,11 +104,12 @@ app.post('/api/internal-logs', (req, res) => {
 app.post('/api/generate', async (req, res) => {
     try {
         // Obtenemos el prompt, modelo a usar y un nombre de archivo opcional
-        const { prompt, filename = 'respuesta', model = process.env.DEFAULT_MODEL || 'llama3' } = req.body;
+        const { prompt, filename = 'respuesta', model = process.env.DEFAULT_MODEL || 'gemma3:12b' } = req.body;
 
         if (!prompt) {
             return res.status(400).json({ error: 'El campo "prompt" es requerido.' });
         }
+
 
         console.log(`Enviando prompt al modelo "${model}": "${prompt}"...`);
 
@@ -128,7 +143,8 @@ app.post('/api/generate', async (req, res) => {
             success: true,
             message: 'Generado y guardado correctamente.',
             file: outputFilename,
-            content: respuesta
+            content: respuesta,
+            timestamp: Date.now()
         });
 
     } catch (error) {
@@ -140,7 +156,68 @@ app.post('/api/generate', async (req, res) => {
     }
 });
 
-app.listen(PORT, () => {
+// Endpoint GET para obtener la última respuesta generada
+app.get('/api/latest-output', async (req, res) => {
+    try {
+        const outputDir = path.resolve(process.cwd(), 'output');
+
+        // Verificar si existe el directorio
+        try {
+            await fs.access(outputDir);
+        } catch {
+            return res.status(404).json({ success: false, error: 'No hay respuestas generadas aún.' });
+        }
+
+        const files = await fs.readdir(outputDir);
+
+        // Filtrar solo archivos .md y ordenar por fecha de modificación (más reciente primero)
+        const mdFiles = files.filter(f => f.endsWith('.md'));
+
+        if (mdFiles.length === 0) {
+            return res.status(404).json({ success: false, error: 'No hay respuestas generadas aún.' });
+        }
+
+        // Obtener estadísticas de todos los archivos para ordenarlos por fecha de creación/modificación
+        const filesWithStats = await Promise.all(
+            mdFiles.map(async (filename) => {
+                const filePath = path.join(outputDir, filename);
+                const stats = await fs.stat(filePath);
+                return {
+                    filename,
+                    filePath,
+                    mtime: stats.mtimeMs // Usar tiempo de modificación
+                };
+            })
+        );
+
+        // Ordenar del más nuevo al más viejo
+        filesWithStats.sort((a, b) => b.mtime - a.mtime);
+
+        // Coger el más reciente
+        const latestFile = filesWithStats[0];
+
+        const content = await fs.readFile(latestFile.filePath, 'utf-8');
+
+        return res.status(200).json({
+            success: true,
+            file: latestFile.filename,
+            content: content,
+            timestamp: latestFile.mtime
+        });
+
+    } catch (error) {
+        console.error('Error leyendo la última respuesta:', error);
+        return res.status(500).json({
+            success: false,
+            error: error.message || 'Error interno del servidor leyendo archivos.'
+        });
+    }
+});
+
+app.listen(PORT, async () => {
     console.log(`Servidor ejecutándose en http://localhost:${PORT}`);
     console.log(`Endpoint disponible: POST http://localhost:${PORT}/api/generate`);
+
+    // Ejecutar verificación inicial extendida de LLM
+    await checkLLMConnection();
 });

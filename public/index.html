@@ -38,10 +38,6 @@
                             <label for="model">Modelo (Opcional)</label>
                             <input type="text" id="model" placeholder="Ej: llama3, gpt-3.5-turbo">
                         </div>
-                        <div class="input-group small">
-                            <label for="filename">Nombre de archivo (Opcional)</label>
-                            <input type="text" id="filename" placeholder="Ej: mi_poema">
-                        </div>
                     </div>
 
                     <button type="submit" id="submit-btn">
@@ -53,7 +49,7 @@
                 <div class="response-container hidden" id="response-container">
                     <div class="response-header">
                         <h2>Respuesta:</h2>
-                        <span class="badge" id="file-badge">Guardado en archivo</span>
+
                     </div>
                     <div id="response-content" class="markdown-body"></div>
                 </div>
@@ -74,8 +70,20 @@
                     <div id="log-container" class="terminal-body">
                         <!-- Los logs aparecerán aquí en tiempo real -->
                         <div class="log-entry sys"><span class="log-time">[${new Date().toLocaleTimeString()}]</span>
-                            <span class="log-source">[System]</span> Esperando conexión de logs...</div>
+                            <span class="log-source">[System]</span> Esperando conexión de logs...
+                        </div>
                     </div>
+                </div>
+
+                <div class="response-container hidden" id="log-response-container" style="margin-top: 2rem;">
+                    <div class="response-header">
+                        <h2 style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+                            Última Respuesta Generada:
+                            <span id="log-response-meta"
+                                style="font-size: 0.85rem; font-weight: normal; color: #888;"></span>
+                        </h2>
+                    </div>
+                    <div id="log-response-content" class="markdown-body"></div>
                 </div>
             </div> <!-- End logs-tab -->
 

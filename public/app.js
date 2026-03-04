@@ -2,14 +2,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('ai-form');
     const promptInput = document.getElementById('prompt');
     const modelInput = document.getElementById('model');
-    const filenameInput = document.getElementById('filename');
     const submitBtn = document.getElementById('submit-btn');
     const submitText = submitBtn.querySelector('span');
     const loader = document.getElementById('loader');
 
     const responseContainer = document.getElementById('response-container');
     const responseContent = document.getElementById('response-content');
-    const fileBadge = document.getElementById('file-badge');
+    const logResponseContainer = document.getElementById('log-response-container');
+    const logResponseContent = document.getElementById('log-response-content');
+    // const fileBadge = document.getElementById('file-badge'); // removed
 
     const errorContainer = document.getElementById('error-container');
     const errorText = document.getElementById('error-text');
@@ -63,7 +64,44 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Auto-scroll al fondo
         logContainer.scrollTop = logContainer.scrollHeight;
+
+        // Detectar si el log nos avisa de una nueva respuesta guardada o si Backend Pong encontró un archivo
+        if (message.includes('Respuesta guardada exitosamente en') ||
+            message.includes('Nuevo archivo modificado/creado:')) {
+            setTimeout(fetchLatestOutput, 500); // Pequeño delay para asegurar que el archivo se ha escrito completamente
+        }
     }
+
+    // Función para obtener y mostrar la última respuesta generada en la pestaña de logs
+    async function fetchLatestOutput() {
+        try {
+            const response = await fetch('/api/latest-output');
+            const data = await response.json();
+
+            if (response.ok && data.success && data.content) {
+                // Solo actualizamos la pestaña de logs, no tocamos la de generación
+                const logResponseContainer = document.getElementById('log-response-container');
+                const logResponseContent = document.getElementById('log-response-content');
+                const logResponseMeta = document.getElementById('log-response-meta');
+
+                if (logResponseContainer && logResponseContent) {
+                    logResponseContent.innerHTML = marked.parse(data.content);
+
+                    if (logResponseMeta && data.file && data.timestamp) {
+                        const dateObj = new Date(data.timestamp);
+                        logResponseMeta.textContent = `(${data.file} - ${dateObj.toLocaleString()})`;
+                    }
+
+                    logResponseContainer.classList.remove('hidden');
+                }
+            }
+        } catch (err) {
+            console.error("Error al obtener la última respuesta:", err);
+        }
+    }
+
+    // Cargar la última respuesta al iniciar la aplicación
+    fetchLatestOutput();
 
     function escapeHTML(str) {
         if (!str) return '';
@@ -81,17 +119,14 @@ document.addEventListener('DOMContentLoaded', () => {
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
 
-        // 1. Obtener los valores
         const prompt = promptInput.value.trim();
         const model = modelInput.value.trim();
-        const filename = filenameInput.value.trim();
 
         if (!prompt) return;
 
         // 2. Preparar el body de la petición
         const payload = { prompt };
         if (model) payload.model = model;
-        if (filename) payload.filename = filename;
 
         // 3. UI: Estado de carga
         setLoading(true);
@@ -115,7 +150,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // 5. Mostrar la respuesta exitosa
-            showResponse(data.content, data.file);
+            showResponse(data.content, data.file, data.timestamp);
 
         } catch (err) {
             // 6. Mostrar error si falla
@@ -139,16 +174,30 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function showResponse(markdown, filename) {
+    function showResponse(markdown, filename, timestamp) {
         // Usar marked para convertir markdown a HTML con seguridad básica
-        responseContent.innerHTML = marked.parse(markdown);
-        fileBadge.textContent = `💾 Guardado como ${filename}`;
+        const html = marked.parse(markdown);
+        responseContent.innerHTML = html;
+        logResponseContent.innerHTML = html;
+
+        const logResponseMeta = document.getElementById('log-response-meta');
+        if (logResponseMeta && filename && timestamp) {
+            const dateObj = new Date(timestamp);
+            logResponseMeta.textContent = `(${filename} - ${dateObj.toLocaleString()})`;
+        }
+
+        // Removed filename badge display
         responseContainer.classList.remove('hidden');
+        if (logResponseContainer) logResponseContainer.classList.remove('hidden');
     }
 
     function hideResponse() {
         responseContainer.classList.add('hidden');
         responseContent.innerHTML = '';
+        if (logResponseContainer) {
+            logResponseContainer.classList.add('hidden');
+            logResponseContent.innerHTML = '';
+        }
     }
 
     function showError(message) {

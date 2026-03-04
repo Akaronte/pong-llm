@@ -46,6 +46,17 @@ console.error = (...args) => {
 const outputDir = path.resolve(process.cwd(), 'output');
 const processedFiles = new Set();
 
+// Función para verificar la conexión con el LLM
+async function checkLLMConnection() {
+    try {
+        await openai.models.list(); // Verificamos que el endpoint responde
+        return true;
+    } catch (error) {
+        console.error(`❌ [Pong Logger] Error conectando con el LLM en ${openai.baseURL}:`, error.message);
+        return false;
+    }
+}
+
 async function startPong() {
     // Asegurarse de que el directorio output existe antes de vigilar
     await fs.mkdir(outputDir, { recursive: true });
@@ -67,6 +78,14 @@ async function startPong() {
                     const content = await fs.readFile(filePath, 'utf-8');
 
                     console.log(`\n🏓 [Backend Pong] 📄 Nuevo archivo modificado/creado: ${filename}`);
+
+                    // Verificamos conexión antes de pedir el prompt de seguimiento
+                    const isConnected = await checkLLMConnection();
+                    if (!isConnected) {
+                        console.error(`❌ [Backend Pong] Se cancela la ronda. El servicio LLM local no está disponible.`);
+                        return; // Abortamos el procesamiento de este archivo
+                    }
+
                     console.log(`🏓 [Backend Pong] 🧠 Leyendo contenido y pensando el siguiente prompt...\n`);
 
                     const model = process.env.DEFAULT_MODEL || 'llama3';
@@ -80,7 +99,7 @@ async function startPong() {
                             },
                             {
                                 role: "user",
-                                content: `Documento a analizar:\n\n${content.substring(0, 3000)}` // Limitamos para no desbordar el contexto
+                                content: `Documento a analizar:\n\n${content.substring(0, 1000)}` // Limitamos para no desbordar el contexto
                             }
                         ],
                         model: model,
@@ -91,7 +110,7 @@ async function startPong() {
                     console.log(`========================= PROMPT GENERADO =========================`);
                     console.log(newPrompt);
                     console.log(`===================================================================\n`);
-                    console.log(`🚀 [Backend Pong] Enviando petición a Backend Principal (Esperando 3 seg para ser natural)...`);
+                    console.log(`🚀 [Backend Pong] Enviando petición a Backend Principal`);
 
                     // Esperamos unos segundos para que se vea el ping-pong claramente en consola
                     setTimeout(async () => {
