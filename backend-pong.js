@@ -8,12 +8,14 @@ import http from 'http';
 // Cargar variables de entorno
 dotenv.config();
 
+const PORT = process.env.PORT || 7000;
+
 const openai = new OpenAI({
     baseURL: process.env.OPENAI_BASE_URL || 'http://localhost:11434/v1',
     apiKey: process.env.OPENAI_API_KEY || 'ollama' // La API key es ignorada por Ollama
 });
 
-const MAIN_SERVER_URL = 'http://localhost:3000/api/internal-logs';
+const MAIN_SERVER_URL = `http://localhost:${PORT}/api/internal-logs`;
 
 // Interceptar logs
 const originalLog = console.log;
@@ -63,7 +65,7 @@ async function startPong() {
 
     console.log('======================================================');
     console.log('🤖 BACKEND PONG INICIADO');
-    console.log(`📂 Vigilando nuevos archivos .md en: ${outputDir}`);
+    console.log(`📂 Vigilando nuevos archivos .md`);
     console.log('======================================================\n');
 
     watch(outputDir, async (eventType, filename) => {
@@ -115,7 +117,7 @@ async function startPong() {
                     // Esperamos unos segundos para que se vea el ping-pong claramente en consola
                     setTimeout(async () => {
                         try {
-                            const response = await fetch('http://localhost:3000/api/generate', {
+                            const response = await fetch(`http://localhost:${PORT}/api/generate`, {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({
@@ -131,7 +133,7 @@ async function startPong() {
                                 console.log('✅ [Backend Pong] Prompt enviado exitosamente. ¡A esperar el siguiente round!');
                             }
                         } catch (err) {
-                            console.error('❌ [Backend Pong] Error de red conectando al servidor principal (¿está en http://localhost:3000?):', err.message);
+                            console.error(`❌ [Backend Pong] Error de red conectando al servidor principal (¿está en http://localhost:${PORT}?):`, err.message);
                         }
                     }, 3000);
 
