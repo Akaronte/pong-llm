@@ -8,6 +8,8 @@ import http from 'http';
 // Cargar variables de entorno
 dotenv.config();
 
+const PROTOCOL = process.env.API_PROTOCOL || 'http';
+const API_HOST = process.env.API_HOST || '127.0.0.1';
 const PORT = process.env.PORT || 7000;
 
 const openai = new OpenAI({
@@ -15,7 +17,7 @@ const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY || 'ollama' // La API key es ignorada por Ollama
 });
 
-const MAIN_SERVER_URL = `http://localhost:${PORT}/api/internal-logs`;
+const MAIN_SERVER_URL = `${PROTOCOL}://${API_HOST}:${PORT}/api/internal-logs`;
 
 // Interceptar logs
 const originalLog = console.log;
@@ -117,7 +119,7 @@ async function startPong() {
                     // Esperamos unos segundos para que se vea el ping-pong claramente en consola
                     setTimeout(async () => {
                         try {
-                            const response = await fetch(`http://localhost:${PORT}/api/generate`, {
+                            const response = await fetch(`${PROTOCOL}://${API_HOST}:${PORT}/api/generate`, {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({
@@ -133,7 +135,7 @@ async function startPong() {
                                 console.log('✅ [Backend Pong] Prompt enviado exitosamente. ¡A esperar el siguiente round!');
                             }
                         } catch (err) {
-                            console.error(`❌ [Backend Pong] Error de red conectando al servidor principal (¿está en http://localhost:${PORT}?):`, err.message);
+                            console.error(`❌ [Backend Pong] Error de red conectando al servidor principal (¿está en ${PROTOCOL}://${API_HOST}:${PORT}?):`, err.message);
                         }
                     }, 3000);
 

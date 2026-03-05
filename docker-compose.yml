@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  pong-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: pong-llm
+    container_name: pong-backend
+    ports:
+      - "7000:7000"
+    environment:
+      # Puerto para el servidor Express (debe coincidir con la redirección y EXPOSE)
+      - PORT=7000
+      # Variables para la API de LLM (ejemplo con Ollama por defecto)
+      - OPENAI_BASE_URL=http://host.docker.internal:11434/v1
+      - OPENAI_API_KEY=ollama
+      - DEFAULT_MODEL=gemma3:12b
+    volumes:
+      # Montar la carpeta local 'output' para persistir los archivos y verlos instantáneamente
+      - ./output:/app/output
+      # (Opcional) Montar public para ver cambios en frontend sin reconstruir contenedor
+      # - ./public:/app/public
+    restart: unless-stopped
+    # Si Ollama corre en local (fuera de docker), usa host.docker.internal
+    # host.docker.internal funciona out-of-the-box en Docker Desktop (Windows/Mac)
+    # En Linux, podría necesitar extra_hosts u otra configuración
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

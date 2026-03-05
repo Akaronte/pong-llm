@@ -32,7 +32,7 @@ Puedes iniciar el servidor con:
 ```bash
 npm start
 ```
-El servidor se ejecutará por defecto en `http://localhost:3000`.
+El servidor se ejecutará por defecto en `http://localhost:7000`.
 
 **Ejecuta también el backend Pong**
 En una segunda terminal, ejecuta el siguiente comando para iniciar el proceso que vigila los archivos Markdown:
@@ -48,7 +48,7 @@ Puedes consumir tu API haciendo una petición POST al endpoint `/api/generate`.
 ### Ejemplo de petición usando cURL:
 
 ```bash
-curl -X POST http://localhost:3000/api/generate \
+curl -X POST http://localhost:7000/api/generate \
 -H "Content-Type: application/json" \
 -d '{
     "prompt": "Escribe un breve artículo sobre los agujeros negros.",
