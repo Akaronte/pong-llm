@@ -29,8 +29,84 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.classList.add('active');
             const targetId = btn.getAttribute('data-tab');
             document.getElementById(targetId).classList.add('active');
+
+            if (targetId === 'files-tab') {
+                loadFilesList();
+            }
         });
     });
+
+    // --- LÓGICA DE ARCHIVOS GENERADOS ---
+    const fileListElement = document.getElementById('file-list');
+    const fileReaderHeader = document.getElementById('file-reader-header');
+    const fileReaderTitle = document.getElementById('file-reader-title');
+    const fileReaderContent = document.getElementById('file-reader-content');
+
+    async function loadFilesList() {
+        if (!fileListElement) return;
+
+        fileListElement.innerHTML = '<div class="loading-files">Cargando archivos...</div>';
+
+        try {
+            const response = await fetch('/api/files');
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+                if (data.files.length === 0) {
+                    fileListElement.innerHTML = '<div class="loading-files">No hay archivos generados.</div>';
+                    return;
+                }
+
+                fileListElement.innerHTML = '';
+
+                data.files.forEach(file => {
+                    const dateObj = new Date(file.mtime);
+                    const item = document.createElement('div');
+                    item.className = 'file-item';
+                    item.innerHTML = `
+                        <span class="file-item-name">${escapeHTML(file.filename)}</span>
+                        <span class="file-item-date">${dateObj.toLocaleString()}</span>
+                    `;
+
+                    item.addEventListener('click', () => {
+                        document.querySelectorAll('.file-item').forEach(el => el.classList.remove('active'));
+                        item.classList.add('active');
+                        loadFileContent(file.filename);
+                    });
+
+                    fileListElement.appendChild(item);
+                });
+            } else {
+                throw new Error(data.error || 'Error cargando archivos');
+            }
+        } catch (error) {
+            console.error('Error al cargar la lista de archivos:', error);
+            fileListElement.innerHTML = `<div class="loading-files" style="color:var(--error)">Error al cargar archivos</div>`;
+        }
+    }
+
+    async function loadFileContent(filename) {
+        if (!fileReaderContent || !fileReaderHeader || !fileReaderTitle) return;
+
+        fileReaderContent.innerHTML = '<div class="loading-files">Cargando contenido...</div>';
+        fileReaderTitle.textContent = filename;
+        fileReaderHeader.classList.remove('hidden');
+
+        try {
+            const response = await fetch(`/api/files/${encodeURIComponent(filename)}`);
+            const data = await response.json();
+
+            if (response.ok && data.success && data.content) {
+                fileReaderContent.innerHTML = marked.parse(data.content);
+            } else {
+                throw new Error(data.error || 'Error leyendo el archivo');
+            }
+        } catch (error) {
+            console.error(`Error al cargar el archivo ${filename}:`, error);
+            fileReaderContent.innerHTML = `<div class="error-container"><p>Error al cargar el archivo.</p></div>`;
+        }
+    }
+
 
     // --- LÓGICA DE TÉRMINAL DE LOGS (SSE) ---
     const logContainer = document.getElementById('log-container');

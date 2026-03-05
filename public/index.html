@@ -22,6 +22,7 @@
         <main>
             <div class="tabs">
                 <button class="tab-btn active" data-tab="generator-tab">Generador</button>
+                <button class="tab-btn" data-tab="files-tab">Archivos Generados</button>
                 <button class="tab-btn" data-tab="logs-tab">Terminal de Logs</button>
             </div>
 
@@ -58,6 +59,25 @@
                     <p id="error-text"></p>
                 </div>
             </div> <!-- End generator-tab -->
+
+            <div id="files-tab" class="tab-content">
+                <div class="file-explorer">
+                    <div class="file-list-container">
+                        <h3>Archivos</h3>
+                        <div id="file-list" class="file-list">
+                            <div class="loading-files">Cargando archivos...</div>
+                        </div>
+                    </div>
+                    <div class="file-reader-container">
+                        <div id="file-reader-header" class="file-reader-header hidden">
+                            <h2 id="file-reader-title">Archivo</h2>
+                        </div>
+                        <div id="file-reader-content" class="markdown-body">
+                            <p class="empty-state">Selecciona un archivo para ver su contenido</p>
+                        </div>
+                    </div>
+                </div>
+            </div> <!-- End files-tab -->
 
             <div id="logs-tab" class="tab-content">
                 <div class="terminal-container">

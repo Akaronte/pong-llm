@@ -234,6 +234,85 @@ app.get('/api/latest-output', async (req, res) => {
     }
 });
 
+// Endpoint GET para obtener la lista de todos los archivos generados
+app.get('/api/files', async (req, res) => {
+    try {
+        const outputDir = path.resolve(process.cwd(), 'output');
+
+        try {
+            await fs.access(outputDir);
+        } catch {
+            return res.status(200).json({ success: true, files: [] });
+        }
+
+        const files = await fs.readdir(outputDir);
+        const mdFiles = files.filter(f => f.endsWith('.md'));
+
+        const filesWithStats = await Promise.all(
+            mdFiles.map(async (filename) => {
+                const filePath = path.join(outputDir, filename);
+                const stats = await fs.stat(filePath);
+                return {
+                    filename,
+                    mtime: stats.mtimeMs
+                };
+            })
+        );
+
+        // Ordenar del más nuevo al más viejo
+        filesWithStats.sort((a, b) => b.mtime - a.mtime);
+
+        return res.status(200).json({
+            success: true,
+            files: filesWithStats
+        });
+
+    } catch (error) {
+        console.error('Error obteniendo la lista de archivos:', error);
+        return res.status(500).json({
+            success: false,
+            error: error.message || 'Error interno del servidor obteniendo archivos.'
+        });
+    }
+});
+
+// Endpoint GET para obtener el contenido de un archivo específico
+app.get('/api/files/:filename', async (req, res) => {
+    try {
+        const { filename } = req.params;
+
+        // Prevención básica de Path Traversal
+        if (filename.includes('/') || filename.includes('\\') || filename.includes('..')) {
+            return res.status(400).json({ success: false, error: 'Nombre de archivo inválido.' });
+        }
+
+        const filePath = path.resolve(process.cwd(), 'output', filename);
+
+        try {
+            await fs.access(filePath);
+        } catch {
+            return res.status(404).json({ success: false, error: 'Archivo no encontrado.' });
+        }
+
+        const content = await fs.readFile(filePath, 'utf-8');
+        const stats = await fs.stat(filePath);
+
+        return res.status(200).json({
+            success: true,
+            file: filename,
+            content: content,
+            timestamp: stats.mtimeMs
+        });
+
+    } catch (error) {
+        console.error(`Error leyendo el archivo ${req.params.filename}:`, error);
+        return res.status(500).json({
+            success: false,
+            error: error.message || 'Error interno del servidor leyendo el archivo.'
+        });
+    }
+});
+
 app.listen(PORT, async () => {
     console.log(`Servidor ejecutándose en http://localhost:${PORT}`);
     console.log(`Endpoint disponible: POST http://localhost:${PORT}/api/generate`);

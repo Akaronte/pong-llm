@@ -43,7 +43,7 @@ body {
 
 .container {
     width: 100%;
-    max-width: 800px;
+    max-width: 100%;
     background: rgba(30, 41, 59, 0.7);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
@@ -412,5 +412,136 @@ button:disabled {
 .log-entry.sys {
     color: #ce9178;
     /* Orange/Brown */
+    font-style: italic;
+}
+
+/* --- FILE EXPLORER --- */
+.file-explorer {
+    display: flex;
+    gap: 1.5rem;
+    height: 500px;
+    background: rgba(15, 23, 42, 0.5);
+    border: 1px solid var(--surface-border);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.file-list-container {
+    width: 250px;
+    background: rgba(30, 41, 59, 0.8);
+    border-right: 1px solid var(--surface-border);
+    display: flex;
+    flex-direction: column;
+}
+
+.file-list-container h3 {
+    padding: 1rem;
+    font-size: 1rem;
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--surface-border);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.file-list {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.file-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.file-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.file-list::-webkit-scrollbar-thumb {
+    background: var(--surface-border);
+    border-radius: 4px;
+}
+
+.file-item {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    transition: background 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.file-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.file-item.active {
+    background: rgba(109, 40, 217, 0.2);
+    border-left: 3px solid var(--primary);
+}
+
+.file-item-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    word-break: break-all;
+}
+
+.file-item-date {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.loading-files {
+    padding: 1rem;
+    color: var(--text-secondary);
+    text-align: center;
+    font-size: 0.9rem;
+}
+
+.file-reader-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.file-reader-header {
+    padding: 1rem;
+    border-bottom: 1px solid var(--surface-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.file-reader-header h2 {
+    font-size: 1.1rem;
+    color: var(--primary);
+    word-break: break-all;
+}
+
+#file-reader-content {
+    flex: 1;
+    padding: 1.5rem;
+    overflow-y: auto;
+}
+
+#file-reader-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+#file-reader-content::-webkit-scrollbar-track {
+    background: rgba(15, 23, 42, 0.5);
+}
+
+#file-reader-content::-webkit-scrollbar-thumb {
+    background: var(--surface-border);
+    border-radius: 4px;
+}
+
+.empty-state {
+    color: var(--text-secondary);
+    text-align: center;
+    margin-top: 3rem;
     font-style: italic;
 }
